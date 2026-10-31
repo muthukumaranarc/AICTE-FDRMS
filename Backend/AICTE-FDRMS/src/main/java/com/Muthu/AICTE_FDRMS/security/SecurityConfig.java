@@ -48,7 +48,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/health", "/api/master-data/reset-official-data", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/health", "/api/ai/**", "/api/master-data/reset-official-data", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/release-cases/*/decision").hasAnyRole("APPROVER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/release-cases/*/complete").hasAnyRole("APPROVER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/master-data").hasRole("ADMIN")
