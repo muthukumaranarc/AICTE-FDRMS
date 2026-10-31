@@ -1,0 +1,29 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.env
+*.local
+
+# Dependencies
+node_modules/
+**/node_modules/
+target/
+**/target/
+
+# Production builds
+dist/
+**/dist/
+build/
+**/build/
+
+# Logs
+*.log
+logs/
+
+# IDE & OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
