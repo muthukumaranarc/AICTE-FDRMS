@@ -1,0 +1,19 @@
+# ==============================================================================
+# Render Blueprint Specification for AICTE-FDRMS
+# Docs: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  - type: web
+    name: aicte-fdrms-backend
+    runtime: docker
+    dockerfilePath: ./Backend/AICTE-FDRMS/Dockerfile
+    dockerContext: ./Backend/AICTE-FDRMS
+    plan: free
+    region: singapore # Nearest low-latency region to India
+    healthCheckPath: /api/master-data
+    envVars:
+      - key: MONGODB_URL
+        sync: false # Add your MongoDB Atlas connection string in the Render Dashboard
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://muthukumaranarc.github.io,https://muthukumaranarc.github.io/AICTE-FDRMS"

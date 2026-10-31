@@ -13,8 +13,33 @@ import {
   ScrutinyObservation,
   ScrutinyVerificationRecord
 } from '../types';
+import {
+  fallbackStats,
+  fallbackInstitutions,
+  fallbackFdrs,
+  fallbackDocuments,
+  fallbackReleaseCases,
+  fallbackUsers,
+  fallbackNotifications,
+  fallbackAuditEntries,
+  fallbackMasterConfig
+} from './fallbackData';
 
-const API_BASE = '/api';
+const API_BASE =
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' ? localStorage.getItem('aicte_api_base_url') : null) ||
+  '/api';
+
+export const getApiBaseUrl = (): string => API_BASE;
+export const setCustomApiBaseUrl = (url: string) => {
+  if (typeof window !== 'undefined') {
+    if (url) {
+      localStorage.setItem('aicte_api_base_url', url.replace(/\/+$/, ''));
+    } else {
+      localStorage.removeItem('aicte_api_base_url');
+    }
+  }
+};
 
 // Current active simulated user for internal AICTE RBAC testing
 let currentUser: InternalUser = {
@@ -44,20 +69,35 @@ const getHeaders = () => ({
 export const api = {
   // Dashboard
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const res = await fetch(`${API_BASE}/dashboard`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch dashboard stats');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/dashboard`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+      return await res.json();
+    } catch {
+      return fallbackStats;
+    }
   },
 
   // Institutions
   getInstitutions: async (params?: { query?: string; state?: string; type?: string }): Promise<Institution[]> => {
-    const searchParams = new URLSearchParams();
-    if (params?.query) searchParams.append('query', params.query);
-    if (params?.state) searchParams.append('state', params.state);
-    if (params?.type) searchParams.append('type', params.type);
-    const res = await fetch(`${API_BASE}/institutions?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch institutions');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.query) searchParams.append('query', params.query);
+      if (params?.state) searchParams.append('state', params.state);
+      if (params?.type) searchParams.append('type', params.type);
+      const res = await fetch(`${API_BASE}/institutions?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch institutions');
+      return await res.json();
+    } catch {
+      let filtered = [...fallbackInstitutions];
+      if (params?.query) {
+        const q = params.query.toLowerCase();
+        filtered = filtered.filter(i => i.name.toLowerCase().includes(q) || i.aictePermanentId.includes(q));
+      }
+      if (params?.state) filtered = filtered.filter(i => i.state.toLowerCase() === params.state!.toLowerCase());
+      if (params?.type) filtered = filtered.filter(i => i.institutionType.toLowerCase() === params.type!.toLowerCase());
+      return filtered;
+    }
   },
 
   getInstitutionById: async (id: string): Promise<Institution> => {
@@ -113,18 +153,31 @@ export const api = {
     maxAmount?: number;
     reviewer?: string;
   }): Promise<FdrInstrument[]> => {
-    const searchParams = new URLSearchParams();
-    if (params?.query) searchParams.append('query', params.query);
-    if (params?.institutionId) searchParams.append('institutionId', params.institutionId);
-    if (params?.bank) searchParams.append('bank', params.bank);
-    if (params?.status) searchParams.append('status', params.status);
-    if (params?.verifStatus) searchParams.append('verifStatus', params.verifStatus);
-    if (params?.minAmount) searchParams.append('minAmount', params.minAmount.toString());
-    if (params?.maxAmount) searchParams.append('maxAmount', params.maxAmount.toString());
-    if (params?.reviewer) searchParams.append('reviewer', params.reviewer);
-    const res = await fetch(`${API_BASE}/fdrs?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch FDRs');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.query) searchParams.append('query', params.query);
+      if (params?.institutionId) searchParams.append('institutionId', params.institutionId);
+      if (params?.bank) searchParams.append('bank', params.bank);
+      if (params?.status) searchParams.append('status', params.status);
+      if (params?.verifStatus) searchParams.append('verifStatus', params.verifStatus);
+      if (params?.minAmount) searchParams.append('minAmount', params.minAmount.toString());
+      if (params?.maxAmount) searchParams.append('maxAmount', params.maxAmount.toString());
+      if (params?.reviewer) searchParams.append('reviewer', params.reviewer);
+      const res = await fetch(`${API_BASE}/fdrs?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch FDRs');
+      return await res.json();
+    } catch {
+      let filtered = [...fallbackFdrs];
+      if (params?.query) {
+        const q = params.query.toLowerCase();
+        filtered = filtered.filter(f => f.fdrNumber.toLowerCase().includes(q) || f.institutionName.toLowerCase().includes(q));
+      }
+      if (params?.institutionId) filtered = filtered.filter(f => f.institutionId === params.institutionId);
+      if (params?.bank) filtered = filtered.filter(f => f.bankName === params.bank);
+      if (params?.status) filtered = filtered.filter(f => f.instrumentStatus === params.status);
+      if (params?.verifStatus) filtered = filtered.filter(f => f.verificationStatus === params.verifStatus);
+      return filtered;
+    }
   },
 
   getFdrById: async (id: string): Promise<FdrInstrument> => {
@@ -183,13 +236,20 @@ export const api = {
 
   // Documents
   getDocuments: async (params?: { fdrId?: string; institutionId?: string; caseId?: string }): Promise<DocumentRecord[]> => {
-    const searchParams = new URLSearchParams();
-    if (params?.fdrId) searchParams.append('fdrId', params.fdrId);
-    if (params?.institutionId) searchParams.append('institutionId', params.institutionId);
-    if (params?.caseId) searchParams.append('caseId', params.caseId);
-    const res = await fetch(`${API_BASE}/documents?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch documents');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.fdrId) searchParams.append('fdrId', params.fdrId);
+      if (params?.institutionId) searchParams.append('institutionId', params.institutionId);
+      if (params?.caseId) searchParams.append('caseId', params.caseId);
+      const res = await fetch(`${API_BASE}/documents?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch documents');
+      return await res.json();
+    } catch {
+      let filtered = [...fallbackDocuments];
+      if (params?.fdrId) filtered = filtered.filter(d => d.fdrId === params.fdrId);
+      if (params?.institutionId) filtered = filtered.filter(d => d.institutionId === params.institutionId);
+      return filtered;
+    }
   },
 
   addDocument: async (doc: Partial<DocumentRecord>): Promise<DocumentRecord> => {
@@ -262,12 +322,19 @@ export const api = {
 
   // Release & Refund Cases
   getReleaseCases: async (status?: string, institutionId?: string): Promise<ReleaseRefundCase[]> => {
-    const searchParams = new URLSearchParams();
-    if (status) searchParams.append('status', status);
-    if (institutionId) searchParams.append('institutionId', institutionId);
-    const res = await fetch(`${API_BASE}/release-cases?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch release cases');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (status) searchParams.append('status', status);
+      if (institutionId) searchParams.append('institutionId', institutionId);
+      const res = await fetch(`${API_BASE}/release-cases?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch release cases');
+      return await res.json();
+    } catch {
+      let filtered = [...fallbackReleaseCases];
+      if (status) filtered = filtered.filter(c => c.caseStatus === status);
+      if (institutionId) filtered = filtered.filter(c => c.institutionId === institutionId);
+      return filtered;
+    }
   },
 
   getReleaseCaseById: async (id: string): Promise<ReleaseRefundCase> => {
@@ -396,18 +463,26 @@ export const api = {
 
   // Notifications
   getNotifications: async (category?: string): Promise<Notification[]> => {
-    const searchParams = new URLSearchParams();
-    if (category) searchParams.append('category', category);
-    const res = await fetch(`${API_BASE}/notifications?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch notifications');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (category) searchParams.append('category', category);
+      const res = await fetch(`${API_BASE}/notifications?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch notifications');
+      return await res.json();
+    } catch {
+      return fallbackNotifications;
+    }
   },
 
   getUnreadNotifCount: async (): Promise<number> => {
-    const res = await fetch(`${API_BASE}/notifications/unread-count`, { headers: getHeaders() });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    return data.unreadCount || 0;
+    try {
+      const res = await fetch(`${API_BASE}/notifications/unread-count`, { headers: getHeaders() });
+      if (!res.ok) return fallbackNotifications.filter(n => !n.isRead).length;
+      const data = await res.json();
+      return data.unreadCount ?? fallbackNotifications.filter(n => !n.isRead).length;
+    } catch {
+      return fallbackNotifications.filter(n => !n.isRead).length;
+    }
   },
 
   markNotificationAsRead: async (id: string): Promise<void> => {
@@ -437,21 +512,29 @@ export const api = {
 
   // Audit
   getAuditTrail: async (params?: { entityType?: string; entityId?: string; action?: string; user?: string }): Promise<AuditTrailEntry[]> => {
-    const searchParams = new URLSearchParams();
-    if (params?.entityType) searchParams.append('entityType', params.entityType);
-    if (params?.entityId) searchParams.append('entityId', params.entityId);
-    if (params?.action) searchParams.append('action', params.action);
-    if (params?.user) searchParams.append('user', params.user);
-    const res = await fetch(`${API_BASE}/audit?${searchParams.toString()}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch audit trail');
-    return res.json();
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.entityType) searchParams.append('entityType', params.entityType);
+      if (params?.entityId) searchParams.append('entityId', params.entityId);
+      if (params?.action) searchParams.append('action', params.action);
+      if (params?.user) searchParams.append('user', params.user);
+      const res = await fetch(`${API_BASE}/audit?${searchParams.toString()}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch audit trail');
+      return await res.json();
+    } catch {
+      return fallbackAuditEntries;
+    }
   },
 
   // Users
   getUsers: async (): Promise<InternalUser[]> => {
-    const res = await fetch(`${API_BASE}/users`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/users`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      return await res.json();
+    } catch {
+      return fallbackUsers;
+    }
   },
 
   createUser: async (user: Partial<InternalUser>): Promise<InternalUser> => {
@@ -476,9 +559,13 @@ export const api = {
 
   // Master Data
   getMasterConfiguration: async (): Promise<MasterConfiguration> => {
-    const res = await fetch(`${API_BASE}/master-data`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch master configuration');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/master-data`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch master configuration');
+      return await res.json();
+    } catch {
+      return fallbackMasterConfig;
+    }
   },
 
   updateMasterConfiguration: async (config: MasterConfiguration): Promise<MasterConfiguration> => {

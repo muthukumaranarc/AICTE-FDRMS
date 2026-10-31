@@ -233,6 +233,8 @@ export interface AuditTrailEntry {
   beforeValue?: string;
   afterValue?: string;
   ipAddress?: string;
+  integrityHash?: string;
+  previousHash?: string;
 }
 
 export interface BankMaster {
@@ -244,6 +246,7 @@ export interface BankMaster {
 }
 
 export interface MasterConfiguration {
+  id?: string;
   advanceReminderDays: number[];
   escalationThresholdDays: number;
   scrutinyDueDays: number;

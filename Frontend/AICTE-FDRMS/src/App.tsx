@@ -400,7 +400,7 @@ export const App: React.FC = () => {
             <div className="p-5 space-y-4 text-xs">
               <div className="flex justify-center py-2">
                 <img
-                  src="/fdrms-icon.svg"
+                  src={`${import.meta.env.BASE_URL}fdrms-icon.svg`}
                   alt="AICTE-FDRMS Emblem"
                   className="w-20 h-20 object-contain drop-shadow-md rounded-2xl"
                 />

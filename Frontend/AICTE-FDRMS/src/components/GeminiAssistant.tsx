@@ -582,7 +582,7 @@ ${releaseSummary}
           <div className="p-4 bg-gradient-to-r from-[#0f2e5a] via-[#153e75] to-[#1e3a8a] text-white flex items-center justify-between border-b border-blue-900/40 shrink-0">
             <div className="flex items-center gap-2.5">
               <img
-                src="/fdrms-icon.svg"
+                src={`${import.meta.env.BASE_URL}fdrms-icon.svg`}
                 alt="AICTE FDRMS"
                 className="w-9 h-9 rounded-xl shadow-xs shrink-0 object-contain p-0.5 bg-white/10 border border-white/20"
               />

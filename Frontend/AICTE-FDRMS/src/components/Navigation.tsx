@@ -129,7 +129,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       {/* Top Logo Brand */}
       <div className="p-3.5 flex items-center gap-3 border-b border-slate-100">
         <img
-          src="/fdrms-icon.svg"
+          src={`${import.meta.env.BASE_URL}fdrms-icon.svg`}
           alt="AICTE FDRMS Official Emblem"
           className="w-10 h-10 rounded-xl shadow-xs shrink-0 object-contain"
         />

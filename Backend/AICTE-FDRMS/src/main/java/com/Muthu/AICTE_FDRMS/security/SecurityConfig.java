@@ -66,7 +66,27 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:[*]", "http://127.0.0.1:[*]", "http://localhost:*", "http://127.0.0.1:*"));
+        List<String> origins = new java.util.ArrayList<>(List.of(
+                "http://localhost:[*]",
+                "http://127.0.0.1:[*]",
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://*.github.io",
+                "https://*.github.io:[*]",
+                "https://*.onrender.com",
+                "https://*.onrender.com:[*]",
+                "https://*.vercel.app",
+                "https://*.vercel.app:[*]"
+        ));
+        String envOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (envOrigins != null && !envOrigins.isBlank()) {
+            for (String origin : envOrigins.split(",")) {
+                if (!origin.trim().isEmpty()) {
+                    origins.add(origin.trim());
+                }
+            }
+        }
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-User-Email", "X-User-Role", "X-Requested-With", "Accept", "Origin"));
         config.setExposedHeaders(Arrays.asList("Retry-After", "X-Total-Count"));
