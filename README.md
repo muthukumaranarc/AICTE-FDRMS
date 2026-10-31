@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="logo/fdrms-logo.png" alt="AICTE-FDRMS Banner" width="680" style="max-width: 100%; height: auto;" />
 
 # AICTE-FDRMS
 ### Centralized Security Deposit & Fixed Deposit Receipt Management System
